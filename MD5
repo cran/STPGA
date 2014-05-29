@@ -1,0 +1,11 @@
+6584ba42697c49c88657f054414259d5 *DESCRIPTION
+8b54e5a89fbda3af5e077053d40bec76 *NAMESPACE
+b5d923e6a8576bc0b6acb80c738114e3 *R/GenAlgForSubsetSelection.R
+955595d1720dd8e29d3a5b472d826448 *R/GenerateCrossesfromElites.R
+43f3e21c48388c7193e241cbbd35271e *R/PEVMEAN.R
+f03f9f1d2287a39461cf49f32381056c *R/makeonecross.R
+dd74e4330b9430ab81c8455bb7076ecc *man/GenAlgForSubsetSelection.Rd
+9d49a51a0732c7435598596c8f3dd86e *man/GenerateCrossesfromElites.Rd
+7a82595dab26bfee5da715e375847bc7 *man/PEVMEAN.Rd
+95f23dc35477675e779e5b3286476868 *man/STPGA-package.Rd
+57a8b9c297169ebaabcd74a71f392e68 *man/makeonecross.Rd
