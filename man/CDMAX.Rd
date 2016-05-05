@@ -1,13 +1,13 @@
-\name{PEVMEAN}
-\alias{PEVMEAN}
+\name{CDMAX}
+\alias{CDMAX}
 
-\title{PEVMEAN}
+\title{CDMAX}
 
 \description{
-Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}))} 
+Calculate  \deqn{max(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test})/diag(P_{Test}P'_{Test}))} 
 }
 \usage{
-PEVMEAN(Train, Test, P, lambda = 1e-05)
+CDMAX(Train, Test, P, lambda = 1e-05)
 }
 \arguments{
   \item{Train}{

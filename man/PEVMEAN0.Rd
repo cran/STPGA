@@ -1,13 +1,12 @@
-\name{PEVMEAN}
-\alias{PEVMEAN}
+\name{PEVMEAN0}
+\alias{PEVMEAN0}
 
-\title{PEVMEAN}
-
+\title{PEVMEAN0}
 \description{
-Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}))} 
+Calculate  \deqn{mean(diag(P_{Train}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Train}))} 
 }
 \usage{
-PEVMEAN(Train, Test, P, lambda = 1e-05)
+PEVMEAN0(Train, Test, P, lambda = 1e-05)
 }
 \arguments{
   \item{Train}{

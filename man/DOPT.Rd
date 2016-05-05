@@ -1,13 +1,12 @@
-\name{PEVMEAN}
-\alias{PEVMEAN}
+\name{DOPT}
+\alias{DOPT}
 
-\title{PEVMEAN}
-
+\title{DOPT}
 \description{
-Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}))} 
+Calculate  \deqn{-det((P'_{Train}P_{Train}+lambda*I))} 
 }
 \usage{
-PEVMEAN(Train, Test, P, lambda = 1e-05)
+DOPT(Train, Test, P, lambda = 1e-05)
 }
 \arguments{
   \item{Train}{

@@ -1,13 +1,13 @@
-\name{PEVMEAN}
-\alias{PEVMEAN}
+\name{CDMEAN2}
+\alias{CDMEAN2}
 
-\title{PEVMEAN}
+\title{CDMEAN2}
 
 \description{
-Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}))} 
+Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Train}P_{Train}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test})} \deqn{/diag(P_{Test}P'_{Test}))} 
 }
 \usage{
-PEVMEAN(Train, Test, P, lambda = 1e-05)
+CDMEAN2(Train, Test, P, lambda = 1e-05)
 }
 \arguments{
   \item{Train}{

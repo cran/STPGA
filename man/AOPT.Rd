@@ -1,13 +1,13 @@
-\name{PEVMEAN}
-\alias{PEVMEAN}
+\name{AOPT}
+\alias{AOPT}
 
-\title{PEVMEAN}
+\title{AOPT}
 
 \description{
-Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}))} 
+Calculate  \deqn{trace((P'_{Train}P_{Train}+lambda*I)^{-1})} 
 }
 \usage{
-PEVMEAN(Train, Test, P, lambda = 1e-05)
+AOPT(Train, Test, P, lambda = 1e-05)
 }
 \arguments{
   \item{Train}{

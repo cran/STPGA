@@ -1,13 +1,14 @@
-\name{PEVMEAN}
-\alias{PEVMEAN}
+\name{PEVMAX2}
+\alias{PEVMAX2}
 
-\title{PEVMEAN}
+
+\title{PEVMAX2}
 
 \description{
-Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}))} 
+Calculate  \deqn{max(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Train}P_{Train}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test})} 
 }
 \usage{
-PEVMEAN(Train, Test, P, lambda = 1e-05)
+PEVMAX2(Train, Test, P, lambda = 1e-05)
 }
 \arguments{
   \item{Train}{
