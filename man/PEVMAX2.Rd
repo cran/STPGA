@@ -5,10 +5,10 @@
 \title{PEVMAX2}
 
 \description{
-Calculate  \deqn{max(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Train}P_{Train}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test})} 
+Calculate  \deqn{max(diag(CP_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Train}P_{Train}(P'_{Train}P_{Train}+\lambda*I)^{-1}P'_{Test}C')} 
 }
 \usage{
-PEVMAX2(Train, Test, P, lambda = 1e-05)
+PEVMAX2(Train, Test, P, lambda = 1e-05, C=NULL)
 }
 \arguments{
   \item{Train}{
@@ -22,6 +22,9 @@ vector of identifiers for individuals in the test set
 }
   \item{lambda}{
 scalar shrinkage parameter (\eqn{\lambda>0}).
+}
+  \item{C}{
+contrast matrix
 }
 }
 

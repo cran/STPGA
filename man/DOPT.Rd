@@ -3,10 +3,10 @@
 
 \title{DOPT}
 \description{
-Calculate  \deqn{-det((P'_{Train}P_{Train}+lambda*I))} 
+Calculate  \deqn{-logdet(C(P'_{Train}P_{Train}+\lambda*I)C').} C is taken as identity matrix if not specified. 
 }
 \usage{
-DOPT(Train, Test, P, lambda = 1e-05)
+DOPT(Train, Test, P, lambda = 1e-05, C=NULL)
 }
 \arguments{
   \item{Train}{
@@ -20,6 +20,9 @@ vector of identifiers for individuals in the test set
 }
   \item{lambda}{
 scalar shrinkage parameter (\eqn{\lambda>0}).
+}
+ \item{C}{
+Contrast Matrix.
 }
 }
 

@@ -4,10 +4,10 @@
 \title{AOPT}
 
 \description{
-Calculate  \deqn{trace((P'_{Train}P_{Train}+lambda*I)^{-1})} 
+Calculate  \deqn{trace(C(P'_{Train}P_{Train}+\lambda*I)^{-1}C').} C is taken as identity matrix if not specified. 
 }
 \usage{
-AOPT(Train, Test, P, lambda = 1e-05)
+AOPT(Train, Test, P, lambda = 1e-05, C=NULL)
 }
 \arguments{
   \item{Train}{
@@ -21,6 +21,9 @@ vector of identifiers for individuals in the test set
 }
   \item{lambda}{
 scalar shrinkage parameter (\eqn{\lambda>0}).
+}
+ \item{C}{
+Contrast Matrix.
 }
 }
 

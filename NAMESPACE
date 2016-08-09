@@ -1,3 +1,4 @@
 exportPattern("^[[:alpha:]]+")
 importFrom("graphics", "plot")
-importFrom("stats", "runif")
+importFrom("stats", "model.matrix","runif", "rpois")
+importFrom("parallel", "mclapply", "mcmapply")

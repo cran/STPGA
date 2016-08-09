@@ -2,8 +2,13 @@
 
 
 DOPT <-
-  function(Train,Test=NULL, P, lambda=1e-5){
+  function(Train,Test=NULL, P, lambda=1e-5, C=NULL){
     PTrain<-P[rownames(P)%in%Train,]
-    D<--det(crossprod(PTrain)+lambda*diag(ncol(P)))
+    if (!is.null(C)){
+    D<--log(det(C%*%(crossprod(PTrain)+lambda*diag(ncol(PTrain)))%*%t(C)))
+    } else {
+      D<--log(det(crossprod(PTrain)+lambda*diag(ncol(PTrain))))
+      
+    }
     return(D)
   }

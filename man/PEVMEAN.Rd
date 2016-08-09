@@ -4,10 +4,10 @@
 \title{PEVMEAN}
 
 \description{
-Calculate  \deqn{mean(diag(P_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}))} 
+Calculate  \deqn{mean(diag(CP_{Test}(P'_{Train}P_{Train}+\lambda*I)^{-1}P'_{Test}C'))} 
 }
 \usage{
-PEVMEAN(Train, Test, P, lambda = 1e-05)
+PEVMEAN(Train, Test, P, lambda = 1e-05, C=NULL)
 }
 \arguments{
   \item{Train}{
@@ -21,6 +21,9 @@ vector of identifiers for individuals in the test set
 }
   \item{lambda}{
 scalar shrinkage parameter (\eqn{\lambda>0}).
+}
+  \item{C}{
+contrast matrix.
 }
 }
 

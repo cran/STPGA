@@ -1,13 +1,13 @@
-\name{PEVMAX}
-\alias{PEVMAX}
+\name{GOPTPEV}
+\alias{GOPTPEV}
 
-\title{PEVMAX}
+\title{GOPTPEV}
 
 \description{
-Calculate  \deqn{max(diag(CP_{Test}(P'_{Train}P_{Train}+\lambda*I)^{-1}P'_{Test}C'))} 
+Calculate  \deqn{max(eigenval(CP_{Test}(P_{Train}'P_{Train}+\lambda*I_{ntrain})^{-1}P_{Test}'C')).} 
 }
 \usage{
-PEVMAX(Train, Test, P, lambda = 1e-05, C=NULL)
+GOPTPEV(Train, Test, P, lambda = 1e-05, C=NULL)
 }
 \arguments{
   \item{Train}{
@@ -22,6 +22,7 @@ vector of identifiers for individuals in the test set
   \item{lambda}{
 scalar shrinkage parameter (\eqn{\lambda>0}).
 }
+
   \item{C}{
 contrast matrix.
 }
