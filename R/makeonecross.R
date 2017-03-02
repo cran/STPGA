@@ -11,8 +11,9 @@ makeonecross <-
     #cross<-unique(cross)[1:n]
     randnum<-runif(1)
     if (randnum<mutprob){
-      ntoreplace<-min(c(rpois(1,min(mutintensity, n)),n))
-      cross[sample(1:n,ntoreplace)]<-sample(setdiff(Candidates,cross),ntoreplace)
+      setdiffres<-setdiff(Candidates,cross)
+      ntoreplace<-min(c(rpois(1,min(mutintensity, n)),n,length(setdiffres)))
+      cross[sample(1:n,ntoreplace)]<-sample(setdiffres,ntoreplace)
     }
     return(cross)
   }

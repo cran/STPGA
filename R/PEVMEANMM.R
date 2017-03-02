@@ -1,7 +1,7 @@
 
 
 PEVMEANMM <-
-  function(Train,Test, Kinv, K=NULL, lambda=1e-5, C=NULL, Vg=NULL, Ve=NULL){
+  function(Train,Test, Kinv,K, lambda=1e-5, C=NULL, Vg=NULL, Ve=NULL){
     ntrain<-length(Train)
     M<-matrix(-1/ntrain,ntrain,ntrain)+diag(ntrain)
     X<-matrix(1, ncol=1, nrow=ntrain)
@@ -12,7 +12,6 @@ PEVMEANMM <-
     Ztest<-as.matrix(model.matrix(~factorTest-1))
    if ((is.null(Vg)||is.null(Ve))){
      if (!is.null(C)){Ztest<-C%*%Ztest}
-     
      PEVMAT<-Ztest%*%solve(crossprod(Ztrain,M%*%Ztrain)+lambda*Kinv)%*%t(Ztest)
    } else {
      bigX<-kronecker(diag(ncol(Vg)), X)

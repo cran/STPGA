@@ -5,7 +5,8 @@
 Given a list of elite training sets, list of candidates the function makes npop new solutions by using crossover and mutation operators.
 }
 \usage{
-GenerateCrossesfromElites(Elites, Candidates, npop, mutprob,mc.cores, mutintensity=2)
+GenerateCrossesfromElites(Elites, Candidates, npop, mutprob, mc.cores = 1,
+                 mutintensity = 1, memoryfortabu = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,6 +28,8 @@ number of cores to use.
  \item{mutintensity}{
 mean of the poisson variable that is used to decide the number of mutations for each cross. 
 }
+ \item{memoryfortabu}{
+tabu memory}
 }
 
 \value{

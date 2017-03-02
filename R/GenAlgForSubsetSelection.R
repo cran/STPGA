@@ -1,5 +1,26 @@
 GenAlgForSubsetSelection <-
-  function(P,Candidates,Test,ntoselect, npop, nelite, mutprob, mutintensity=2, niterations, lambda, plotiters=TRUE, errorstat="PEVMEAN",C=NULL, mc.cores=1, InitPop=NULL, tolconv=1e-5, Vg=NULL, Ve=NULL){
+  function(P,Candidates,Test,ntoselect, npop=100, nelite=5, keepbest=TRUE, tabu=T,tabumemsize=1, mutprob=.8, mutintensity=1, niterations=500, minitbefstop=200,niterreg=5,lambda=1e-6, plotiters=FALSE,plottype=1, errorstat="PEVMEAN",C=NULL, mc.cores=1, InitPop=NULL, tolconv=1e-7, Vg=NULL, Ve=NULL){
+
+    ridgereg<-function(y=CurrentPopFuncValues ,x=designforCurrentPop,lambda=lambda){
+		n<-nrow(x)
+		p<-ncol(x)
+		mindim<-min(p,n)
+		rownames(x)<-NULL
+		svdX<-svd(x, nu=mindim,nv=mindim)
+		insvdnonzero<-1:mindim
+		diagvecforinv<-(svdX$d[insvdnonzero])/((svdX$d[insvdnonzero])^2+lambda)
+		coef<-tcrossprod(svdX$v%*%diag(diagvecforinv),svdX$v)%*%t(x)%*%(y-mean(y))
+		return(list(coef=coef))
+	}
+    mc.cores <- switch( Sys.info()[['sysname']],
+                        Windows = {1}, 
+                        Linux   = {mc.cores},
+                        Darwin  = {mc.cores})
+    nelite=nelite-1
+    if(tabu){tabumemsize=tabumemsize}else{tabumemsize=0}
+    if (tabumemsize>0){
+      memoryfortabu<-vector(mode="list", length=tabumemsize)
+    } else {memoryfortabu=NULL}
     completeton<-function(x){if (length(x)<ntoselect){
       x<-c(x, sample(setdiff(unique(unlist(InitPop)), x), ntoselect-length(x)))
     }
@@ -9,167 +30,135 @@ GenAlgForSubsetSelection <-
     else{
       InitPop<-lapply(InitPop, completeton)
     }
-    
-    
-    if (errorstat=="CDMEANMM"){
+    if (errorstat%in%c("CDMEANMM","PEVMEANMM","GAUSSMEANMM", "userMM")){
       K=solve(P)
     }
-    if (errorstat=="PEVMEANMM"){
-      K=solve(P)
-    }
-    if (errorstat=="GAUSSMEANMM"){
-      K=solve(P)
-    }
-    
-    
-    if (errorstat=="PEVMEAN"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){PEVMEAN(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="PEVMEANMM"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){PEVMEANMM(Train=x, Test=Test,Kinv=P, lambda=lambda, C=C, Vg=Vg, Ve=Ve)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="CDMEANMM"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){CDMEANMM(Train=x, Test=Test,Kinv=P, K=K, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="GAUSSMEANMM"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){GAUSSMEANMM(Train=x, Test=Test,Kinv=P, K=K, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="GOPTPEV"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){GOPTPEV(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="GOPTPEV2"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){GOPTPEV2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="PEVMEAN0"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){PEVMEAN0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="PEVMEAN2"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){PEVMEAN2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="PEVMAX"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){PEVMAX(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="PEVMAX0"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){PEVMAX0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="PEVMAX2"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){PEVMAX2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="CDMEAN0"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){CDMEAN0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="CDMEAN"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){CDMEAN(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="CDMEAN2"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){CDMEAN2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="CDMAX"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){CDMAX(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="CDMAX0"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){CDMAX0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="CDMAX2"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){CDMAX2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="DOPT"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){DOPT(Train=x, Test=NULL,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    else if (errorstat=="AOPT"){
-      InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){AOPT(Train=x, Test=NULL,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-    }
-    
-    else { 
-      if (!is.null(errorstat)){InitPopFuncValues<-as.numeric(unlist(parallel::mclapply(InitPop, FUN=function(x){do.call(errorstat,list(x,Test,P,lambda,C))},mc.cores=mc.cores, mc.preschedule=T)))
+    linenames<-rownames(P)
+    if (!is.null(errorstat)){
+      if (errorstat%in%c("CDMEANMM","PEVMEANMM","GAUSSMEANMM", "userMM")){
+
+         InitPopFuncValues <- as.numeric(unlist(mclapply(InitPop, FUN = function(x) {
+          do.call(errorstat, list(x,Test,P,K,lambda,C, Vg, Ve))
+        },mc.cores=mc.cores,mc.preschedule=T)))
+        } else {
+        InitPopFuncValues <- as.numeric(unlist(mclapply(InitPop, FUN = function(x) {
+          do.call(errorstat, list(x,Test,P,lambda,C))
+        },mc.cores=mc.cores,mc.preschedule=T)))
       }
     }
+    designforInitPop<-Reduce('rbind',lapply(InitPop,function(x){as.numeric(Candidates%in%x)}))
+    #designforInitPop<-cbind(rep(1,nrow(designforInitPop)),designforInitPop)
+    if (length(InitPop)>2){sdofdesigns<-mean(apply(designforInitPop,2,sd))}else{sdofdesigns=0}
+     betahat=ridgereg(y=InitPopFuncValues ,x=designforInitPop,lambda=lambda)$coef
+
+
+    #betahat=solve(crossprod(designforInitPop)+lambda*diag(ncol(designforInitPop)),t(designforInitPop)%*%InitPopFuncValues)
     
     orderofInitPop<-order(InitPopFuncValues, decreasing=FALSE)
-    ElitePop<-parallel::mclapply(orderofInitPop[1:nelite], FUN=function(x){return(InitPop[[x]])}, mc.cores = mc.cores, mc.preschedule=T)
+    ElitePop<-mclapply(orderofInitPop[1:nelite], FUN=function(x){return(InitPop[[x]])}, mc.cores = mc.cores, mc.preschedule=T)
     ElitePopFuncValues<-InitPopFuncValues[orderofInitPop[1:nelite]]
-    meanvec<-c()
+
+    minvec <- c()
+    sdvec<-c()
+    designforElitePop<-Reduce('rbind',lapply(ElitePop,function(x){as.numeric(linenames%in%x)}))
+    if (length(ElitePop)>2){sdofelitedesigns<-mean(apply(designforElitePop,2,sd))}else{sdofelitedesigns=0}
+    sdvec<-c(sdvec, sdofelitedesigns)
+    minvec <- c(minvec, min(ElitePopFuncValues))
+    
     for (iters in 1:niterations){
-      if (iters>200){
-        maxmeans<-max(meanvec[(length(meanvec)-200):length(meanvec)])
-        minmeans<-min(meanvec[(length(meanvec)-200):length(meanvec)])
+      if (iters>minitbefstop){
+        maxmeans<-max(minvec[(length(minvec)-minitbefstop):length(minvec)])
+        minmeans<-min(minvec[(length(minvec)-minitbefstop):length(minvec)])
         meansdiff<-maxmeans-minmeans
-         if(meansdiff<tolconv){break('No change in last 200 iterations')
+         if(meansdiff<tolconv){break()
         }
       }
-      CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
-                                              Candidates = Candidates, npop = npop, mutprob = mutprob,mc.cores=mc.cores, mutintensity=mutintensity)
+      if (iters>tabumemsize){
+        CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
+                                                    Candidates = Candidates, npop = npop, mutprob = mutprob,mc.cores=mc.cores, mutintensity=mutintensity, memoryfortabu=memoryfortabu)
+      } else { CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
+                                                           Candidates = Candidates, npop = npop, mutprob = mutprob,mc.cores=mc.cores, mutintensity=mutintensity, memoryfortabu=NULL)}
+      if (tabumemsize>0){
+        memoryfortabu[[iters%%tabumemsize+1]]<-CurrentPop
+      } else {memoryfortabu=NULL}
+      if (keepbest){CurrentPop<-c(CurrentPop, ElitePop[1])}
       
-      CurrentPop<-c(CurrentPop, ElitePop[1])
+      if (!is.null(errorstat)){
+        if (errorstat%in%c("CDMEANMM","PEVMEANMM","GAUSSMEANMM", "userMM")){
+          CurrentPopFuncValues <- as.numeric(unlist(mclapply(CurrentPop, 
+                                                             FUN = function(x) {
+                                                               do.call(errorstat, list(x,Test,P,K,lambda,C, Vg, Ve))
+                                                             },mc.cores=mc.cores,mc.preschedule=T)))
+        } else {
+          CurrentPopFuncValues <- as.numeric(unlist(mclapply(CurrentPop, 
+                                                             FUN = function(x) {
+                                                               do.call(errorstat,list(x,Test,P,lambda,C))
+                                                             },mc.cores=mc.cores,mc.preschedule=T)))
+        }
+      }
+      #CurrentPop<-lapply(which(!duplicated(CurrentPopFuncValues)), function(x){return(CurrentPop[[x]])})
+      #CurrentPopFuncValues<-CurrentPopFuncValues[which(!duplicated(CurrentPopFuncValues))]
+      if (niterreg>iters){
+      designforCurrentPop<-Reduce('rbind',lapply(CurrentPop,function(x){as.numeric(Candidates%in%x)}))
+     # designforCurrentPop<-cbind(rep(1,nrow(designforCurrentPop)),designforCurrentPop)
+      if (length(CurrentPop)>2){sdofdesigns<-mean(apply(designforCurrentPop,2,sd))} else {sdofdesigns=0}
+            betahat=ridgereg(y=CurrentPopFuncValues ,x=designforCurrentPop,lambda=lambda)$coef
+
+     # betahat=solve(crossprod(designforCurrentPop)+lambda*diag(ncol(designforCurrentPop)),t(designforCurrentPop)%*%CurrentPopFuncValues)
+      # print(mean(abs(betahat[-1])))
+      orderofBetasforCurrentPop <- order(betahat, decreasing = FALSE)
       
-      if (errorstat=="PEVMEAN"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){PEVMEAN(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="PEVMEANMM"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){PEVMEANMM(Train=x, Test=Test,Kinv=P, lambda=lambda, C=C, Vg=Vg, Ve=Ve)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="CDMEANMM"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){CDMEANMM(Train=x, Test=Test,Kinv=P,K=K,  lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="GAUSSMEANMM"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){GAUSSMEANMM(Train=x, Test=Test,Kinv=P,K=K,  lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="GOPTPEV"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){GOPTPEV(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="GOPTPEV2"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){GOPTPEV2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="PEVMEAN0"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){PEVMEAN0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="PEVMEAN2"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){PEVMEAN2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="PEVMAX"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){PEVMAX(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="PEVMAX0"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){PEVMAX0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="PEVMAX2"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){PEVMAX2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="CDMEAN0"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){CDMEAN0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="CDMEAN"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){CDMEAN(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="CDMEAN2"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){CDMEAN2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="CDMAX"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){CDMAX(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="CDMAX0"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){CDMAX0(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="CDMAX2"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){CDMAX2(Train=x, Test=Test,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="DOPT"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){DOPT(Train=x, Test=NULL,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else if (errorstat=="AOPT"){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){AOPT(Train=x, Test=NULL,P=P, lambda=lambda, C=C)},mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      else{ if (!is.null(errorstat)){
-        CurrentPopFuncValues<-as.numeric(unlist(parallel::mclapply(CurrentPop, FUN=function(x){do.call(errorstat,list(x, Test,P,lambda,C))}, mc.cores=mc.cores, mc.preschedule=T)))
-      }
-      }
+      bestpredicted<-Candidates[orderofBetasforCurrentPop[1:ntoselect]]
       orderofCurrentPop<-order(CurrentPopFuncValues, decreasing=FALSE)
       ElitePop<-lapply(orderofCurrentPop[1:nelite], FUN=function(x){return(CurrentPop[[x]])})
       ElitePopFuncValues<-CurrentPopFuncValues[orderofCurrentPop[1:nelite]]
-      meanvec<-c(meanvec,min(ElitePopFuncValues))
-      if(plotiters){plot(meanvec)}
+      designforElitePop<-Reduce('rbind',lapply(ElitePop,function(x){as.numeric(linenames%in%x)}))
+      if (length(ElitePop)>2){sdofelitedesigns<-mean(apply(designforElitePop,2,sd))} else {sdofelitedesigns=0}
+      sdvec<-c(sdvec, sdofelitedesigns)
+      ElitePop[[nelite+1]]<-bestpredicted
+      ElitePopFuncValues[nelite+1]<-mean(ElitePopFuncValues)
+      minvec <- c(minvec, min(ElitePopFuncValues))
+      } else{
+        orderofCurrentPop<-order(CurrentPopFuncValues, decreasing=FALSE)
+        ElitePop<-lapply(orderofCurrentPop[1:nelite], FUN=function(x){return(CurrentPop[[x]])})
+        designforElitePop<-Reduce('rbind',lapply(ElitePop,function(x){as.numeric(linenames%in%x)}))
+        if (length(ElitePop)>2){sdofelitedesigns<-mean(apply(designforElitePop,2,sd))} else {sdofelitedesigns=0}
+        sdvec<-c(sdvec, sdofelitedesigns)
+        ElitePopFuncValues <- CurrentPopFuncValues[orderofCurrentPop[1:(nelite+1)]]
+        minvec <- c(minvec, min(ElitePopFuncValues))
+      }
+        
+      if (plotiters) {
+      	if (plottype==1){
+      	par(mfrow=c(1,1))
+        plot(minvec, type="b")
+        abline(h=min(minvec), col="red")
+        mtext(side=3, line=-3, col="blue", text=paste("\n     Minimum value of objective function is ", round(min(ElitePopFuncValues), 5), ".", sep=""), adj=0, outer=T) 
+
+      	} else if (plottype==2){
+        par(mfrow=c(2,1))
+        plot(minvec, type="b")
+        abline(h=min(minvec), col="red")
+        mtext(side=3, line=-3, col="blue", text=paste("\n     Minimum value of objective function is ", round(min(ElitePopFuncValues), 5), ".", sep=""), adj=0, outer=T) 
+        barplot(round(apply(designforElitePop,2,mean),3))
+        par(mfrow=c(1,1))
+
+      	} else if (plottype==3){
+      		  par(mfrow=c(3,1))
+        plot(minvec, type="b")
+        abline(h=min(minvec), col="red")
+        mtext(side=3, line=-3, col="blue", text=paste("\n    Divergence: ", round(sdofelitedesigns,5),".\n     Minimum value of objective function is ", round(min(ElitePopFuncValues), 5), ".", sep=""), adj=0, outer=T) 
+        barplot(round(apply(designforElitePop,2,mean),3))
+        plot(sdvec, type="b", col=(sdvec==0)+1)
+        par(mfrow=c(1,1))
+
+      	} else {}
+      }
     }
-    ElitePop[[nelite+1]]<-meanvec
-    
+    ElitePop[[nelite+2]]<-minvec
+    for (i in 1:(nelite+1)){
+      names(ElitePop)[i]<-paste("Solution with rank ", i, sep="")
+    }
+    names(ElitePop)[nelite+2]<-"Best criterion values over iterarions"
     return(ElitePop)
   }

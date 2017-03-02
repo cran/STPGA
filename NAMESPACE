@@ -1,4 +1,4 @@
-exportPattern("^[[:alpha:]]+")
-importFrom("graphics", "plot")
-importFrom("stats", "model.matrix","runif", "rpois")
-importFrom("parallel", "mclapply", "mcmapply")
+export(GenAlgForSubsetSelection,GenAlgForSubsetSelectionNoTest,AOPT,CDMEAN,DOPT,EOPT,PEVMEAN)
+import("graphics")
+import("stats")
+import("parallel")

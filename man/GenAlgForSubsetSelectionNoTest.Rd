@@ -7,15 +7,17 @@ It uses a genetic algorithm to select \eqn{n_{Train}} individuals so that optima
 }
 
 \usage{
-GenAlgForSubsetSelectionNoTest(P, ntoselect, 
-npop, nelite, mutprob,  mutintensity, niterations,
-lambda, plotiters=TRUE, errorstat="PEVMEAN",C=NULL, mc.cores=1,
-InitPop=NULL, tolconv=1e-5, Vg=NULL, Ve=NULL)
+GenAlgForSubsetSelectionNoTest(P, ntoselect, npop = 100, nelite = 5, keepbest = TRUE,
+                 tabu = T, tabumemsize = 1, mutprob=.8, mutintensity = 1,
+                 niterations = 500, minitbefstop = 200, niterreg = 5,
+                 lambda = 1e-06, plotiters = FALSE, plottype=1, errorstat =
+                 "PEVMEAN", C = NULL, mc.cores = 1, InitPop = NULL,
+                 tolconv = 1e-07, Vg = NULL, Ve = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{P}{
-\eqn{n \times k} matrix of the first PCs of the predictor variables. The matrix needs identifiers of the individuals as rownames. For methods using the relationships, P is the inverse of the relationship matrix with row and column names.
+depending on the criterion this is either a numeric data matrix or a symmetric similarity matrix. When it is a data matrix, the union of the identifiers of the candidate individuals should be put as rownames (and column names in case of a similarity matrix). For methods using the relationships, this is the inverse of the relationship matrix with row and column names as the the identifiers of the candidate individuals.
 }
    \item{ntoselect}{
  \eqn{n_{Train}:} number of individuals to select in the training set.
@@ -26,6 +28,15 @@ InitPop=NULL, tolconv=1e-5, Vg=NULL, Ve=NULL)
   \item{nelite}{
  genetic algorithm parameter, number of solutions selected as elite parents which will  generate the next set of solutions. 
 }
+\item{keepbest}{
+ genetic algorithm parameter, TRUE or FALSE. If TRUE then the best solution is always kept in the next generation of solutions (elitism). 
+}
+ \item{tabu}{
+ genetic algorithm parameter, TRUE or FALSE. If TRUE then the solutions that are saved in tabu memory will not be retried.}
+ \item{tabumemsize}{
+ genetic algorithm parameter, integer>0. Number of generations to hold in tabu memory. 
+}
+
   \item{mutprob}{
  genetic algorithm parameter, probability of mutation for each generated solution.
 }
@@ -36,11 +47,20 @@ mean of the poisson variable that is used to decide the number of mutations for 
  genetic algorithm parameter, number of iterations.  
 }
 
+  \item{minitbefstop}{
+ genetic algorithm parameter, number of iterations before stopping if no change is observed in criterion value.  
+}
+
+ \item{niterreg}{
+ genetic algorithm parameter, number of iterations to use regressions, an integer with minimum value of 1}
   \item{lambda}{
  scalar shrinkage parameter (\eqn{\lambda>0}).
 }
 \item{plotiters}{
  plot the convergence: TRUE or FALSE. Default is TRUE.
+}
+\item{plottype}{
+ type of plot, default is 1. possible values 1,2,3.
 }
 \item{errorstat}{
  optimality criterion: One of the optimality criterion. Default is "PEVMEAN". It is possible to use user defined functions as shown in the examples.
@@ -53,7 +73,7 @@ mean of the poisson variable that is used to decide the number of mutations for 
 a list of initial solutions
 }
 \item{tolconv}{
-if the algorithm cannot improve the errorstat more than tolconv for the last 200 iterations it will stop.
+if the algorithm cannot improve the errorstat more than tolconv for the last minitbefstop iterations it will stop.
 }
  \item{C}{
 Contrast Matrix.
@@ -80,44 +100,74 @@ The GA does not guarantee convergence to globally optimal solutions and it is hi
 
 \examples{
 \dontrun{
-data(iris)
-#We will try to estimate petal width from 
-#variables sepal length and width and petal length. 
-y<-iris[,4]
-X<-as.matrix(iris[,1:3])
-names(y)<-rownames(X)<-paste(iris[,5], rep(1:50,3),sep='_')
+###################### Example for three level designs for the 
+#second order model in two factors with a square design region
+X<-matrix(0,nrow=3^2,ncol=5)
+ij=0
 
-#test data 25 iris plants selected at random from the virginica family, 
-#NOTE: Increase niterations and npop substantially for good solutions.
+for (i in -1:1){
+  for (j in -1:1){
+    ij=ij+1
+    X[ij,]<-c(i,j, i^2,j^2, i*j)
+    
+  }
+}
+X<-cbind(1,X)
+D<-as.matrix(dist(X))
+K<-tcrossprod(X)
+rownames(K)<-colnames(K)<-rownames(D)<-colnames(D)<-rownames(X)<-paste("x",1:3^2, sep="")
+X
+library(STPGA)
+ListTrain1<-GenAlgForSubsetSelectionNoTest(P=X,ntoselect=4, InitPop=NULL,
+             npop=100, nelite=5, mutprob=.5, mutintensity = 1,
+             niterations=200,minitbefstop=20, tabu=F,tabumemsize = 0,plotiters=F,
+             lambda=1e-9,errorstat="DOPT", mc.cores=1)
+                                                 
+                                                 
+ListTrain2<-GenAlgForSubsetSelectionNoTest(P=solve(K+1e-6*diag(ncol(K))),ntoselect=4, InitPop=NULL,
+            npop=100, nelite=5, mutprob=.5, mutintensity = 1,
+            niterations=200,minitbefstop=20, tabu=F,tabumemsize = 0,plotiters=F,
+            lambda=1,errorstat="CDMEANMM", mc.cores=1)
+                                                 
+                                                 
+  par(mfrow=c(1,2),mar=c(1,1,1,1))
+  labelling1<-rownames(X)\%in\%ListTrain1[[1]]+1
+  plot(X[,2], X[,3], col=labelling1, pch=2*labelling1,cex=2*(labelling1-1),
+   xlab="", ylab="", main="DOPT", cex.main=.7,xaxt='n',yaxt='n')
+    for (i in -1:1){
+  abline(v=i, lty=2)
+  abline(h=i,lty=2)
+    }
+    labelling2<-rownames(X)\%in\%ListTrain2[[1]]+1
+  plot(X[,2], X[,3], col=labelling2, pch=2*labelling2,cex=2*(labelling2-1),
+   xlab="", ylab="", main="CDMEANMM", cex.main=.7,xaxt='n',yaxt='n')
+    for (i in -1:1){
+  abline(v=i, lty=2)
+  abline(h=i,lty=2)
+    }
 
-ListTrain<-GenAlgForSubsetSelectionNoTest(P=X,ntoselect=25, 
-npop=100, nelite=5, mutprob=.8, niterations=20, plotiters=FALSE, lambda=1e-5)
+########################Dopt design three level designs for the second order 
+#model in two factors with a square design region
 
-###test sample
-ytest<-y[!(names(y)\%in\%ListTrain[[1]])]
-Xtest<-X[!(rownames(X)\%in\%ListTrain[[1]]),]
+par(mfrow=c(2,2),mar=c(1,1,1,1))
+ for (ntoselect in c(5,6,7,8)){
+ 	ListTrain<-GenAlgForSubsetSelectionNoTest(P=X,ntoselect=ntoselect, InitPop=NULL,
+             npop=10, nelite=3, mutprob=.5, mutintensity = 1,
+             niterations=200,minitbefstop=200, tabu=F,tabumemsize = 0,plotiters=F,
+             lambda=1e-9,errorstat="DOPT", mc.cores=1)
+             
+  labelling<-rownames(X)\%in\%ListTrain[[1]]+1
+  plot(as.numeric(X[,2]), as.numeric(X[,3]), col=labelling, pch=2*labelling,cex=2*(labelling-1),
+   xlab="", ylab="", main="DOPT", cex.main=.7,xaxt='n',yaxt='n')
+    for (i in -1:1){
+  abline(v=i, lty=2)
+  abline(h=i,lty=2)
+    }
 
+}
 
+par(mfrow=c(1,1))
 
-##predictions by optimized sample
-ytrainopt<-y[names(y)\%in\% ListTrain[[1]]]
-Xtrainopt<-X[rownames(X)\%in\%ListTrain[[1]],]
-
-modelopt<-lm(ytrainopt~1+Xtrainopt)
-predictopt<-cbind(rep(1, nrow(Xtest)),Xtest)\%*\%modelopt$coefficients
-
-###predictions by a random sample of the same size
-rs<-sample(names(y), 25)
-ytrainrs<-y[names(y)\%in\%rs]
-Xtrainrs<-X[rownames(X)\%in\%rs,]
-modelrs<-lm(ytrainrs~1+Xtrainrs)
-ytestrs<-y[!(names(y)\%in\%rs)]
-Xtestrs<-X[!(rownames(X)\%in\%rs),]
-predictrs<-cbind(rep(1, nrow(Xtestrs)),Xtestrs)\%*\%modelrs$coefficients
-
-#accuracies of the optimized sample and random sample. 
-cor(predictopt,ytest)
-cor(predictrs, ytestrs)
 }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

@@ -1,7 +1,7 @@
 
 
 CDMEANMM <-
-  function(Train,Test, Kinv, K, lambda=1e-5, C=NULL){
+  function(Train,Test, Kinv, K, lambda=1e-5, C=NULL, Vg=NULL, Ve=NULL){
     ntrain<-length(Train)
     M<-matrix(-1/ntrain,ntrain,ntrain)+diag(ntrain)
     namesinPforfactorlevels<-rownames(Kinv)

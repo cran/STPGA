@@ -7,15 +7,18 @@ It uses a genetic algorithm to select \eqn{n_{Train}} individuals so that optima
 }
 
 \usage{
-GenAlgForSubsetSelection(P, Candidates, Test, ntoselect, 
-npop, nelite, mutprob,  mutintensity, niterations, lambda,
-plotiters=TRUE,errorstat="PEVMEAN",C=NULL, mc.cores=1, InitPop=NULL, 
-tolconv=1e-5, Vg=NULL, Ve=NULL)
+GenAlgForSubsetSelection(P, Candidates, Test, ntoselect, npop = 100, nelite =
+                 5, keepbest = TRUE, tabu = T, tabumemsize = 1, mutprob
+                 = 0.8, mutintensity = 1, niterations = 500,
+                 minitbefstop = 200, niterreg = 5, lambda = 1e-06,
+                 plotiters = FALSE, plottype=1,errorstat = "PEVMEAN", C = NULL,
+                 mc.cores = 1, InitPop = NULL, tolconv = 1e-07, Vg =
+                 NULL, Ve = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{P}{
-\eqn{n \times k} matrix of the first PCs of the predictor variables. The matrix needs to have union of the identifiers of the candidate and test individuals as rownames. For methods using the relationships, P is the inverse of the relationship matrix with row and column names.
+depending on the criterion this is either a numeric data matrix or a symmetric similarity matrix. When it is a data matrix, the union of the identifiers of the candidate (and test) individuals should be put as rownames (and column names in case of a similarity matrix). For methods using the relationships, this is the inverse of the relationship matrix with row and column names as the the identifiers of the candidate (and test) individuals.
 }
   \item{Candidates}{ 
   vector of identifiers for the individuals in the candidate set.
@@ -32,6 +35,15 @@ tolconv=1e-5, Vg=NULL, Ve=NULL)
   \item{nelite}{
  genetic algorithm parameter, number of solutions selected as elite parents which will  generate the next set of solutions. 
 }
+ \item{keepbest}{
+ genetic algorithm parameter, TRUE or FALSE. If TRUE then the best solution is always kept in the next generation of solutions (elitism). 
+}
+ \item{tabu}{
+ genetic algorithm parameter, TRUE or FALSE. If TRUE then the solutions that are saved in tabu memory will not be retried.}
+ \item{tabumemsize}{
+ genetic algorithm parameter, integer>0. Number of generations to hold in tabu memory. 
+}
+
   \item{mutprob}{
  genetic algorithm parameter, probability of mutation for each generated solution.
 }
@@ -42,11 +54,20 @@ mean of the poisson variable that is used to decide the number of mutations for 
  genetic algorithm parameter, number of iterations.  
 }
 
+  \item{minitbefstop}{
+ genetic algorithm parameter, number of iterations before stopping if no change is observed in criterion value.  
+}
+
+ \item{niterreg}{
+ genetic algorithm parameter, number of iterations to use regressions, an integer with minimum value of 1}
   \item{lambda}{
  scalar shrinkage parameter  (\eqn{\lambda>0}).
 }
 \item{plotiters}{
  plot the convergence: TRUE or FALSE. Default is TRUE.
+}
+\item{plottype}{
+ type of plot, default is 1. possible values 1,2,3.
 }
 
 \item{errorstat}{
@@ -60,7 +81,7 @@ mean of the poisson variable that is used to decide the number of mutations for 
 a list of initial solutions
 }
 \item{tolconv}{
-if the algorithm cannot improve the errorstat more than tolconv for the last 200 iterations it will stop.
+if the algorithm cannot improve the errorstat more than tolconv for the last minitbefstop iterations it will stop.
 }
  \item{C}{
 Contrast Matrix.
@@ -86,143 +107,101 @@ The GA does not guarantee convergence to globally optimal solutions and it is hi
 
 
 \examples{
-data(iris)
-#We will try to estimate petal width from 
-#variables sepal length and width and petal length. 
-y<-iris[,4]
-X<-as.matrix(iris[,1:3])
-names(y)<-rownames(X)<-paste(iris[,5], rep(1:50,3),sep='_')
+	\dontrun{
+####################################
+library(EMMREML)
+library(STPGA)
+data(WheatData)
 
-#test data 25 iris plants selected at random from the virginica family, 
-#candidates are the plants in the  setosa and versicolor families.
-candidates<-rownames(X)[1:100]
-test<-sample(setdiff(rownames(X),candidates), 25)
+svdWheat<-svd(Wheat.K, nu=5, nv=5)
+PC50WHeat<-Wheat.K\%*\%svdWheat$v
+plot(PC50WHeat[,1],PC50WHeat[,2])
+rownames(PC50WHeat)<-rownames(Wheat.K)
+DistWheat<-dist(PC50WHeat)
+TreeWheat<-hclust(DistWheat)
+TreeWheat<-cutree(TreeWheat, k=4)
+
+Test<-rownames(PC50WHeat)[TreeWheat==4]
+length(Test)
+Candidates<-setdiff(rownames(PC50WHeat), Test)
+
+
+###instead of using the algorithm directly using a wrapper to 
+###implement an for multiple starting points for genetic algorithm.
+repeatgenalg<-function(numrepsouter,numrepsinner){
+  StartingPopulation2=NULL 
+  for (i in 1:numrepsouter){
+    print("Rep:")
+    print(i)
+    StartingPopulation<-lapply(1:numrepsinner, function(x){
+    	GenAlgForSubsetSelection(P=PC50WHeat,Candidates=Candidates, 
+    	Test=Test, ntoselect=50, InitPop=StartingPopulation2,
+ npop=50, nelite=5, mutprob=.5, mutintensity = rpois(1,4),
+ niterations=10,minitbefstop=5, tabumemsize = 2,plotiters=TRUE, 
+ lambda=1e-9,errorstat="CDMEAN", mc.cores=1)})
+    StartingPopulation2<-vector(mode="list", length = numrepsouter*1)
+    ij=1
+    for (i in 1:numrepsinner){
+      for (j in 1:1){
+        StartingPopulation2[[ij]]<-StartingPopulation[[i]][[j]]
+        ij=ij+1
+      }
+    }
+  }
+  ListTrain<-GenAlgForSubsetSelection(P=PC50WHeat,Candidates=Candidates, 
+    	Test=Test,ntoselect=50, InitPop=StartingPopulation2,npop=100, 
+    	nelite=10, mutprob=.5, mutintensity = 1,niterations=300,
+    	minitbefstop=100, tabumemsize = 1,plotiters=T,
+    	lambda=1e-9,errorstat="CDMEAN", mc.cores=1)
+  return(ListTrain)
+}
+
+
+ListTrain<-repeatgenalg(20, 3)
+
 ###test sample
-ytest<-y[names(y)\%in\%test]
-Xtest<-X[rownames(X)\%in\%test,]
-
-#NOTE: Increase niterations and npop substantially for better convergence.
-
-ListTrain<-GenAlgForSubsetSelection(P=X,Candidates=candidates,Test=test,ntoselect=25, 
-npop=100, nelite=5, mutprob=.8, niterations=20, lambda=1e-5,
-plotiters=FALSE,errorstat="PEVMEAN")
-
+deptestopt<-Wheat.Y[Wheat.Y$id\%in\%Test,]
 
 ##predictions by optimized sample
-ytrainopt<-y[names(y)\%in\% ListTrain[[1]]]
-Xtrainopt<-X[rownames(X)\%in\%ListTrain[[1]],]
+deptrainopt<-Wheat.Y[(Wheat.Y$id\%in\%ListTrain[[1]]),]
 
-modelopt<-lm(ytrainopt~1+Xtrainopt)
-predictopt<-cbind(rep(1, nrow(Xtest)),Xtest)\%*\%modelopt$coefficients
+Ztrain<-model.matrix(~-1+deptrainopt$id)
+Ztest<-model.matrix(~-1+deptestopt$id)
 
+modelopt<-emmreml(y=deptrainopt$plant.height,X=matrix(1, nrow=nrow(deptrainopt), ncol=1), 
+Z=Ztrain, K=Wheat.K)
+predictopt<-Ztest\%*\%modelopt$uhat
+
+corvecrs<-c()
+for (rep in 1:300){
 ###predictions by a random sample of the same size
-rs<-sample(candidates, 25)
-ytrainrs<-y[names(y)\%in\%rs]
-Xtrainrs<-X[rownames(X)\%in\%rs,]
-modelrs<-lm(ytrainrs~1+Xtrainrs)
-predictrs<-cbind(rep(1, nrow(Xtest)),Xtest)\%*\%modelrs$coefficients
-
-#accuracies of the optimized sample and random sample. 
-cor(predictopt,ytest)
-cor(predictrs, ytest)
-
- \dontrun{
-data(iris)
-#We will try to estimate petal width from
-#variables sepal length and width and petal length.
-y<-iris[,4]
-X<-as.matrix(iris[,1:3])
-X<-cbind(rep(1,nrow(X)),X)
-names(y)<-rownames(X)<-paste(iris[,5], rep(1:50,3),sep="_" )
-#test data 25 iris plants selected at random from the virginica family,
-#candidates are the plants in the  setosa and versicolor families.
-candidates<-rownames(X)[1:100]
-test<-sample(setdiff(rownames(X),candidates), 25)
-###test sample
-ytest<-y[names(y)\%in\%test]
-Xtest<-X[rownames(X)\%in\%test,]
-#NOTE: Increase niterations and npop substantially for better convergence.
-ListTrain2<-GenAlgForSubsetSelection(P=X,Candidates=candidates,
-Test=test,ntoselect=25,npop=100,
-nelite=5, mutprob=.8, niterations=200,
-lambda=1e-5, errorstat="PEVMEAN2")
-
-ListTrain<-GenAlgForSubsetSelection(P=X,Candidates=candidates,
-Test=test,ntoselect=25,npop=100,
-nelite=5, mutprob=.8, niterations=200, lambda=1e-5, errorstat="PEVMEAN")
-
-
-
-
-##predictions by optimized sample
-ytrainopt<-y[names(y)\%in\% ListTrain[[1]]]
-Xtrainopt<-X[rownames(X)\%in\%ListTrain[[1]],]
-modelopt<-lm(ytrainopt~-1+Xtrainopt)
-predictopt<-Xtest\%*\%modelopt$coefficients
-
-ytrainopt2<-y[names(y)\%in\% ListTrain2[[1]]]
-Xtrainopt2<-X[rownames(X)\%in\%ListTrain2[[1]],]
-modelopt2<-lm(ytrainopt2~-1+Xtrainopt2)
-predictopt2<-Xtest\%*\%modelopt2$coefficients
-
-
-###predictions by a random sample of the same size
-rs<-sample(candidates, 25)
-ytrainrs<-y[names(y)\%in\%rs]
-Xtrainrs<-X[rownames(X)\%in\%rs,]
-modelrs<-lm(ytrainrs~-1+Xtrainrs)
-predictrs<-Xtest\%*\%modelrs$coefficients
-#accuracies of the optimized sample and random sample.
-
-
-cor(predictopt,ytest)
-cor(predictopt2,ytest)
-
-
-cor(predictrs, ytest)
-
-################based on relationships
-Kiris<-cov(t(iris[,1:3]))
-Kiris<-Kiris/mean(diag(Kiris))+.001*diag(nrow(Kiris))
-rownames(Kiris)<-colnames(Kiris)<-rownames(X)
-ListTrain<-GenAlgForSubsetSelection(P=solve(Kiris),Candidates=candidates,Test=test,ntoselect=25, 
-                                    npop=100, nelite=5, mutprob=.8, niterations=100, lambda=1,
-                                    plotiters=TRUE,errorstat="PEVMEANMM", mc.cores=1)
-                                    
-                                    
-##############use of user defined objective functions   
-STPGAUSERFUNC<-function(Train,Test, P, lambda=1e-5,C=NULL, q=1){
-  PTrain<-P[rownames(P)\%in\%Train,]
-  PTest<-P[rownames(P)\%in\%Test,]
-  if (!is.null(C)){PTest<-C\%*\%PTest}
+  rs<-sample(Candidates, 50)
   
-  svdD<-svd(PTest\%*\%solve(crossprod(PTrain)+lambda*diag(ncol(P)),t(PTest)), nu=1,nv=1)
-  return((prod(svdD$d[1:ncol(P)]^q))^(1/(q*ncol(P))))
+  deptestrs<-Wheat.Y[Wheat.Y$id\%in\%Test,]
+  
+  deptrainrs<-Wheat.Y[(Wheat.Y$id\%in\%rs),]
+  
+  Ztrain<-model.matrix(~-1+deptrainrs$id)
+  Ztest<-model.matrix(~-1+deptestrs$id)
+  
+  library(EMMREML)
+  modelrs<-emmreml(y=deptrainrs$plant.height,X=matrix(1, nrow=nrow(deptrainrs), ncol=1), 
+  Z=Ztrain, K=Wheat.K)
+  predictrs<-Ztest\%*\%modelrs$uhat
+corvecrs<-c(corvecrs,cor(predictrs, deptestrs$plant.height))
+
+}
+mean(corvecrs)
+cor(predictopt, deptestopt$plant.height)
+
+
+plot(PC50WHeat[,1],PC50WHeat[,2], col=rownames(PC50WHeat)\%in\%ListTrain[[1]]+1,
+pch=2*rownames(PC50WHeat)\%in\%Test+1, xlab="pc1", ylab="pc2")
 }
 
 
-STPGAUSERFUNC2<-function(Train,Test, P, lambda=1e-5,C=NULL,q=1){
-  ####Kiefer's-q q in (-Inf, 1]
-  PTrain<-P[rownames(P)\%in\%Train,]
-  PTest<-P[rownames(P)\%in\%Test,]
-  if (!is.null(C)){PTest<-C\%*\%PTest}
-  svdD<-svd(PTest\%*\%solve(crossprod(PTrain)+lambda*diag(ncol(P)),t(PTest)), nu=1,nv=1)
-  return(-(mean(1/svdD$d[1:ncol(P)]^q))^(1/(q)))
 }
 
-
-ListTrain<-GenAlgForSubsetSelection(P=X,Candidates=candidates,Test=test,ntoselect=25, 
-                                    npop=100, nelite=5, mutprob=.8, niterations=100, lambda=1,
-                                    plotiters=TRUE,errorstat="STPGAUSERFUNC", mc.cores=1)
-
-
-ListTrain2<-GenAlgForSubsetSelection(P=X,Candidates=candidates,Test=test,ntoselect=25, 
-                                    npop=100, nelite=5, mutprob=.8, niterations=100, lambda=1,
-                                    plotiters=TRUE,errorstat="STPGAUSERFUNC2", mc.cores=1)
-
-
-}
-}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 
