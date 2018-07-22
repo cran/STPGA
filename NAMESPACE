@@ -1,4 +1,5 @@
-export(GenAlgForSubsetSelection,GenAlgForSubsetSelectionNoTest,AOPT,CDMEAN,DOPT,EOPT,PEVMEAN)
+export(GenAlgForSubsetSelection,GenAlgForSubsetSelectionNoTest,AOPT,CDMEAN, CDMEAN0, CDMEAN2,CDMEANMM,DOPT,EOPT,PEVMEAN,PEVMEAN0,PEVMEAN2,PEVMEANMM,GAUSSMEANMM,PEVMAX, PEVMAX0,PEVMAX2,CDMAX, CDMAX0,CDMAX2, GOPTPEV,GOPTPEV2,Amat.pieces)
 import("graphics")
 import("stats")
 import("parallel")
+import("AlgDesign")

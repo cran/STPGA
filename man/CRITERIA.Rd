@@ -152,68 +152,18 @@ residual covariance matrix for the traits (multi-trait version).
 	\dontrun{
 #Examples to new criterion:
 #1- PEVmax
-STPGAUSERFUNC1<-function(Train,Test, P, lambda=1e-6, C=NULL){
+STPGAUSERFUNC<-function(Train,Test, P, lambda=1e-6, C=NULL){
   PTrain<-P[rownames(P)\%in\%Train,]
   PTest<-P[rownames(P)\%in\%Test,]
   if (length(Test)==1){PTest=matrix(PTest, nrow=1)}
   if (!is.null(C)){ PTest<-C\%*\%PTest}
-  PEVmax<-max(diag(PTest\%*\%solve(crossprod(PTrain)+
-  lambda*diag(ncol(PTrain)),t(PTest))))
+  PEV<-PTest\%*\%solve(crossprod(PTrain)+lambda*diag(ncol(PTrain)),t(PTrain))
+    PEVmax<-max(diag(tcrossprod(PEV)))
   return(PEVmax)
 }
 
-#2- Geometric mean of eigen values
-STPGAUSERFUNC2<-function(Train,Test, P, lambda=1e-6,C=NULL, q=1){
-  #q in (0,Inf)
-  PTrain<-P[rownames(P)\%in\%Train,]
-  if (!is.null(C)){PTrain<-C\%*\%PTrain}
-  svdD<-svd(crossprod(PTrain), nu=0,nv=0)
-  return((prod(1/(svdD$d[1:ncol(P)]+lambda)^q))^(1/(q*ncol(P))))
-}
-
-#3- Kiefer's-q
-STPGAUSERFUNC3<-function(Train,Test, P, lambda=1e-6,C=NULL,q=-1){
-  ####Kiefer's-q q in (-Inf, 1]
-  PTrain<-P[rownames(P)\%in\%Train,]
-  if (!is.null(C)){PTrain<-C\%*\%PTrain}
-  svdD<-svd(crossprod(PTrain), nu=0,nv=0)
-  return((mean((svdD$d[1:ncol(P)]+lambda)^q))^(1/(q)))
-}
 
 
-##P is distance matrix with row and column names
-
-#4- minimize(max(min distances to the test))
-STPGAUSERFUNC4<-function(Train,Test, P, lambda=1e-6,C=NULL){
-  PTraintoTest<-P[rownames(P)\%in\%Train,colnames(P)\%in\%Test]
-  return(max(apply(PTraintoTest, 1, min)))
-}
-
-#5- minimize(-(min distances among train))
-STPGAUSERFUNC5<-function(Train,Test=NULL, P, lambda=1e-6,C=NULL){
-  PTraintoTest<-P[rownames(P)\%in\%Train,colnames(P)\%in\%Train]
-  PTraintoTestc<-c(PTraintoTest[lower.tri(PTraintoTest, diag=F)])
-  return(-min(PTraintoTestc))
-}
-
-
-
-#6- minimize(max(max distances to the test))
-STPGAUSERFUNC6<-function(Train,Test, P, lambda=1e-6,C=NULL){
-  PTraintoTest<-P[rownames(P)\%in\%Train,colnames(P)\%in\%Test]
-  return(max(apply(PTraintoTest, 1, mean)))
-}
-
-
-7-A composite design criterion
-STPGAUSERFUNC7<-function(Train,Test, P,lambda=1e-6,C=NULL){
-	D=as.matrix(dist(P))
-	rownames(D)<-colnames(D)<-rownames(P)
-  return(STPGAUSERFUNC4(Train,Test, P, lambda=1e-6,C=NULL)+
-  STPGAUSERFUNC3(Train,Test, P=D, lambda=1e-6,C=NULL)+
-  DOPT(Train,Test, P=X, lambda=1e-6,C=NULL))
-  
-}
 
 ######Here is an example of usage
 data(iris)
@@ -221,19 +171,18 @@ data(iris)
 #variables sepal length and width and petal length.
 X<-as.matrix(iris[,1:4])
 distX<-as.matrix(dist(X))
-rownames(distX)<-colnames(distX)<-names(y)<-rownames(X)<-paste(iris[,5],rep(1:50,3),sep="_" )
+rownames(distX)<-colnames(distX)<-rownames(X)<-paste(iris[,5],rep(1:50,3),sep="_" )
 #test data 25 iris plants selected at random from the virginica family,
 #candidates are the plants in the  setosa and versicolor families.
 candidates<-rownames(X)[1:100]
 test<-sample(setdiff(rownames(X),candidates), 25)
-#want to select 25 examples using the criterion defined in STPGAUSERFUNC6
+#want to select 25 examples using the criterion defined in STPGAUSERFUNC
 #Increase niterations and npop substantially for better convergence.
-ListTrain2<-GenAlgForSubsetSelection(P=distX,Candidates=candidates,
+ListTrain<-GenAlgForSubsetSelection(P=distX,Candidates=candidates,
 Test=test,ntoselect=25,npop=50,
 nelite=5, mutprob=.8, niterations=30,
-lambda=1e-5, errorstat="STPGAUSERFUNC6")
+lambda=1e-5, errorstat="STPGAUSERFUNC", plotiters=TRUE)
 }
-	
 }
 \author{Deniz Akdemir}
 

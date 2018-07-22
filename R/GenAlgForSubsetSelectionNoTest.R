@@ -1,4 +1,4 @@
-GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keepbest=TRUE,tabu=T, tabumemsize=1, mutprob=.8, mutintensity=1, niterations=500, minitbefstop=200,niterreg=5, lambda=1e-6, plotiters = FALSE,plottype=1, errorstat="PEVMEAN",C=NULL, mc.cores=1,  InitPop=NULL, tolconv=1e-7, Vg=NULL, Ve=NULL){
+GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keepbest=TRUE,tabu=TRUE, tabumemsize=1, mutprob=.8, mutintensity=1, niterations=500, minitbefstop=200,niterreg=5, lambda=1e-6, plotiters = FALSE,plottype=1, errorstat="PEVMEAN2",C=NULL, mc.cores=1,  InitPop=NULL, tolconv=1e-7, Vg=NULL, Ve=NULL){
 	
   ridgereg<-function(y=CurrentPopFuncValues ,x=designforCurrentPop,lambda=lambda){
 		n<-nrow(x)
@@ -12,12 +12,32 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
 		coef<-tcrossprod(svdX$v%*%diag(diagvecforinv),svdX$v)%*%t(x)%*%(y-mean(y))
 		
 		return(list(coef=coef))
-	}
+  }
+  
+  getsetsfedorov<-function(dummyx){
+    Candidates<-rownames(P)
+    npc<-min(c(ntoselect-10,ncol(P)))
+    optsolD<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="D")
+    optsolA<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="A")
+    optsolI<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="I")
+    return(list(Candidates[optsolA$rows],Candidates[optsolD$rows],Candidates[optsolI$rows]))
+    
+  }
+  if (is.null(InitPop)){
+  if (sum(errorstat %in%c("AOPT", "DOPT", "CDMEAN", "PEVMEAN", "PEVMEAN2"))>0){
+    InitPop<-lapply(1:npop, function(q){
+      picki<-sample(1:3,1)
+      return(getsetsfedorov(q)[[picki]])
+    })
+    
+  }
+  }
+  
   mc.cores <- switch( Sys.info()[['sysname']],
                       Windows = {1}, 
                       Linux   = {mc.cores},
                       Darwin  = {mc.cores})
-  nelite=nelite-1
+nelite=nelite-1
  if(tabu){tabumemsize=tabumemsize}else{tabumemsize=0}
  if (tabumemsize>0){
  memoryfortabu<-vector(mode="list", length=tabumemsize)
@@ -33,10 +53,9 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
   }
     return(x)
   }
-  if (is.null(InitPop) ){InitPop <- lapply(1:npop, function(x) {
-    return(sample(linenames, ntoselect))
-  })}
-  else{
+  
+  if (is.null(InitPop)){InitPop<-lapply(1:npop, function(x){return(sample(linenames, ntoselect))})
+  } else {
     InitPop<-lapply(InitPop, completeton)
   }
   
@@ -53,7 +72,7 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
     }
   designforInitPop<-Reduce('rbind',lapply(InitPop,function(x){as.numeric(linenames%in%x)}))
   #designforInitPop<-cbind(rep(1,nrow(designforInitPop)),designforInitPop)
-     betahat=ridgereg(y=InitPopFuncValues ,x=designforInitPop,lambda=lambda)$coef
+  betahat=ridgereg(y=InitPopFuncValues ,x=designforInitPop,lambda=lambda)$coef
       
  # betahat=solve(crossprod(designforInitPop)+lambda*diag(ncol(designforInitPop)),t(designforInitPop)%*%InitPopFuncValues)
   orderofInitPop <- order(InitPopFuncValues, decreasing = FALSE)
@@ -72,8 +91,7 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
   if (length(ElitePop)>2){sdofelitedesigns<-mean(apply(designforElitePop,2,sd))} else {sdofelitedesigns=0}
   sdvec<-c(sdvec, sdofelitedesigns)
   minvec <- c(minvec, min(ElitePopFuncValues))
-  
- 
+
   for (iters in 1:niterations) {
     if (iters>minitbefstop){
       maxmeans<-max(minvec[(length(minvec)-minitbefstop):length(minvec)])
@@ -86,7 +104,7 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
     if (iters>tabumemsize){
     CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
                                             Candidates = linenames, npop = npop, mutprob = mutprob,mc.cores=mc.cores, mutintensity=mutintensity, memoryfortabu=memoryfortabu)
-    } else { CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
+    } else {CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
                                                          Candidates = linenames, npop = npop, mutprob = mutprob,mc.cores=mc.cores, mutintensity=mutintensity, memoryfortabu=NULL)}
     if (tabumemsize>0){
       memoryfortabu[[iters%%tabumemsize+1]]<-CurrentPop
@@ -111,7 +129,7 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
     designforCurrentPop<-Reduce('rbind',lapply(CurrentPop,function(x){as.numeric(linenames%in%x)}))
     #designforCurrentPop<-cbind(rep(1,nrow(designforCurrentPop)),designforCurrentPop)
    
-            betahat=ridgereg(y=CurrentPopFuncValues ,x=designforCurrentPop,lambda=lambda)$coef
+   betahat=ridgereg(y=CurrentPopFuncValues ,x=designforCurrentPop,lambda=lambda)$coef
 
    # betahat=solve(crossprod(designforCurrentPop)+lambda*diag(ncol(designforCurrentPop)),t(designforCurrentPop)%*%CurrentPopFuncValues)
     orderofBetasforCurrentPop <- order(betahat, decreasing = FALSE)
@@ -144,7 +162,7 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
     }  
     if (plotiters) {
         if (plottype==1){
-		par(mfrow=c(1,1))
+		    par(mfrow=c(1,1))
         plot(minvec, type="b")
         abline(h=min(minvec), col="red")
         mtext(side=3, line=-3, col="blue", text=paste("\n     Minimum value of objective function is ", round(min(ElitePopFuncValues), 5), ".", sep=""), adj=0, outer=T) 

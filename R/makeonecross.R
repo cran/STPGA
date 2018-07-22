@@ -4,7 +4,7 @@ makeonecross <-
     n2<-length(unlist(x2))
     n<-min(c(n1,n2))
     x1x2<-union(unlist(x1),unlist(x2))
-    cross<-sample(x1x2,n, replace=FALSE)
+    cross<-sample(x1x2,n, replace=F)
     #x1x2<-c(unlist(x1),unlist(x2))
     #cross<-c()
     #while(length(unique(cross))<n){cross<-c(cross,sample(x1x2,n, replace=T))}

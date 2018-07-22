@@ -1,5 +1,5 @@
 GenAlgForSubsetSelection <-
-  function(P,Candidates,Test,ntoselect, npop=100, nelite=5, keepbest=TRUE, tabu=T,tabumemsize=1, mutprob=.8, mutintensity=1, niterations=500, minitbefstop=200,niterreg=5,lambda=1e-6, plotiters=FALSE,plottype=1, errorstat="PEVMEAN",C=NULL, mc.cores=1, InitPop=NULL, tolconv=1e-7, Vg=NULL, Ve=NULL){
+  function(P,Candidates,Test,ntoselect, npop=100, nelite=5, keepbest=TRUE, tabu=TRUE,tabumemsize=1, mutprob=.8, mutintensity=1, niterations=500, minitbefstop=200,niterreg=5,lambda=1e-6, plotiters=FALSE,plottype=1, errorstat="PEVMEAN2",C=NULL, mc.cores=1, InitPop=NULL, tolconv=1e-7, Vg=NULL, Ve=NULL){
 
     ridgereg<-function(y=CurrentPopFuncValues ,x=designforCurrentPop,lambda=lambda){
 		n<-nrow(x)
@@ -11,7 +11,28 @@ GenAlgForSubsetSelection <-
 		diagvecforinv<-(svdX$d[insvdnonzero])/((svdX$d[insvdnonzero])^2+lambda)
 		coef<-tcrossprod(svdX$v%*%diag(diagvecforinv),svdX$v)%*%t(x)%*%(y-mean(y))
 		return(list(coef=coef))
-	}
+    }
+    
+    
+    getsetsfedorov<-function(dummyx){
+      npc<-min(c(ntoselect-10,ncol(P)))
+      optsolD<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="D")
+      optsolA<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="A")
+      optsolI<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="I")
+      optsolI2<-AlgDesign::optFederov(data=as.data.frame(P[rownames(P)%in%Candidates,1:npc]),nTrials=ntoselect, criterion="I", space=as.data.frame(P[rownames(P)%in%Test,1:npc]),nRepeats=1)
+    return(list(Candidates[optsolA$rows],Candidates[optsolD$rows],Candidates[optsolI$rows],Candidates[optsolI2$rows]))
+    }
+    
+    if (is.null(InitPop)){
+      if (sum(errorstat %in%c("AOPT", "DOPT", "CDMEAN", "PEVMEAN", "PEVMEAN2"))>0){
+        InitPop<-lapply(1:npop, function(q){
+          picki<-sample(1:4,1)
+          return(getsetsfedorov(q)[[picki]])
+        })
+      }
+    }
+    
+    
     mc.cores <- switch( Sys.info()[['sysname']],
                         Windows = {1}, 
                         Linux   = {mc.cores},
@@ -76,7 +97,7 @@ GenAlgForSubsetSelection <-
       if (iters>tabumemsize){
         CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
                                                     Candidates = Candidates, npop = npop, mutprob = mutprob,mc.cores=mc.cores, mutintensity=mutintensity, memoryfortabu=memoryfortabu)
-      } else { CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
+      } else {CurrentPop <- GenerateCrossesfromElites(Elites = ElitePop, 
                                                            Candidates = Candidates, npop = npop, mutprob = mutprob,mc.cores=mc.cores, mutintensity=mutintensity, memoryfortabu=NULL)}
       if (tabumemsize>0){
         memoryfortabu[[iters%%tabumemsize+1]]<-CurrentPop
