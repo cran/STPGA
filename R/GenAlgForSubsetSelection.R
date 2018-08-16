@@ -15,19 +15,34 @@ GenAlgForSubsetSelection <-
     
     
     getsetsfedorov<-function(dummyx){
+        randint<-sample(1:10, 1)
+        
       npc<-min(c(ntoselect-10,ncol(P)))
-      optsolD<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="D")
-      optsolA<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="A")
-      optsolI<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="I")
-      optsolI2<-AlgDesign::optFederov(data=as.data.frame(P[rownames(P)%in%Candidates,1:npc]),nTrials=ntoselect, criterion="I", space=as.data.frame(P[rownames(P)%in%Test,1:npc]),nRepeats=1)
-    return(list(Candidates[optsolA$rows],Candidates[optsolD$rows],Candidates[optsolI$rows],Candidates[optsolI2$rows]))
+      if (randint==1){
+          optsol<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="D")
+          outf<-Candidates[optsol$rows]
+      } else if (randint==2){
+      optsol<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="A")
+      outf<-Candidates[optsol$rows]
+
+      } else if  (randint==3){
+      optsol<-AlgDesign::optFederov(data=P[rownames(P)%in%Candidates,1:npc],nTrials=ntoselect, criterion="I")
+      outf<-Candidates[optsol$rows]
+
+      } else  if (randint==4) {
+      optsol<-AlgDesign::optFederov(data=as.data.frame(P[rownames(P)%in%Candidates,1:npc]),nTrials=ntoselect, criterion="I", space=as.data.frame(P[rownames(P)%in%Test,1:npc]),nRepeats=1)
+      outf<-Candidates[optsol$rows]
+
+      } else {
+      outf<-sample(Candidates, ntoselect)
+      }
+    return(outf)
     }
     
     if (is.null(InitPop)){
       if (sum(errorstat %in%c("AOPT", "DOPT", "CDMEAN", "PEVMEAN", "PEVMEAN2"))>0){
         InitPop<-lapply(1:npop, function(q){
-          picki<-sample(1:4,1)
-          return(getsetsfedorov(q)[[picki]])
+          return(getsetsfedorov(q))
         })
       }
     }

@@ -17,17 +17,28 @@ GenAlgForSubsetSelectionNoTest<-function (P, ntoselect, npop=100, nelite=5, keep
   getsetsfedorov<-function(dummyx){
     Candidates<-rownames(P)
     npc<-min(c(ntoselect-10,ncol(P)))
-    optsolD<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="D")
-    optsolA<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="A")
-    optsolI<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="I")
-    return(list(Candidates[optsolA$rows],Candidates[optsolD$rows],Candidates[optsolI$rows]))
+    randint<-sample(1:10, 1)
+if (randint==1){
+    optsol<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="D")
+    outf<-Candidates[optsol$rows]
+
+} else if (randint==2){
+    optsol<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="A")
+    outf<-Candidates[optsol$rows]
+
+} else if (randint==3){
+    optsol<-AlgDesign::optFederov(data=P[,1:npc],nTrials=ntoselect, criterion="I")
+    outf<-Candidates[optsol$rows]
+} else {
+    outf<-sample(Candidates, ntoselect)
+}
+    return(outf)
     
   }
   if (is.null(InitPop)){
   if (sum(errorstat %in%c("AOPT", "DOPT", "CDMEAN", "PEVMEAN", "PEVMEAN2"))>0){
     InitPop<-lapply(1:npop, function(q){
-      picki<-sample(1:3,1)
-      return(getsetsfedorov(q)[[picki]])
+      return(getsetsfedorov(q))
     })
     
   }

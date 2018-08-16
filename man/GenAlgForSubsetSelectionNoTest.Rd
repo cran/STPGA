@@ -8,11 +8,11 @@ It uses a genetic algorithm to select \eqn{n_{Train}} individuals so that optima
 
 \usage{
 GenAlgForSubsetSelectionNoTest(P, ntoselect, npop = 100, nelite = 5, keepbest = TRUE,
-                 tabu = TRUE, tabumemsize = 1, mutprob=.8, mutintensity = 1,
-                 niterations = 500, minitbefstop = 200, niterreg = 5,
-                 lambda = 1e-06, plotiters = FALSE, plottype=1, errorstat =
-                 "PEVMEAN2", C = NULL, mc.cores = 1, InitPop = NULL,
-                 tolconv = 1e-07, Vg = NULL, Ve = NULL)
+tabu = TRUE, tabumemsize = 1, mutprob=.8, mutintensity = 1,
+niterations = 500, minitbefstop = 200, niterreg = 5,
+lambda = 1e-06, plotiters = FALSE, plottype=1, errorstat =
+ "PEVMEAN2", C = NULL, mc.cores = 1, InitPop = NULL,
+ tolconv = 1e-07, Vg = NULL, Ve = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -170,6 +170,4 @@ par(mfrow=c(1,1))
 
 }
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
 

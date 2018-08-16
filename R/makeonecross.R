@@ -15,5 +15,5 @@ makeonecross <-
       ntoreplace<-min(c(rpois(1,min(mutintensity, n)),n,length(setdiffres)))
       cross[sample(1:n,ntoreplace)]<-sample(setdiffres,ntoreplace)
     }
-    return(cross)
+    return(sort(cross))
   }

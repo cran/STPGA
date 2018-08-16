@@ -20,11 +20,15 @@
 \alias{PEVMEAN0}
 \alias{PEVMEAN2}
 \alias{PEVMEANMM}
+\alias{dist_to_test}
+\alias{dist_to_test2}
+\alias{neg_dist_in_train}
+\alias{neg_dist_in_train2}
 
 
 \title{Optimality Criteria}
 \description{
-These are some default design criteria to be minimized. There is a table in the details section that gives the formula for each design criterion and describes their usage. Note that the inputs for these functions come in 2 syntax flavors, namely Type-X and Type-K. Users can define and use their owm design criteria as long as it has the Type-X syntax as shown with the examples.  
+These are some default design criteria to be minimized. There is a table in the details section that gives the formula for each design criterion and describes their usage. Note that the inputs for these functions come in 3 syntax flavors, namely Type-X, Type-D and Type-K. Users can define and use their owm design criteria as long as it has the Type-X syntax as shown with the examples.  
 }
 \usage{
 AOPT(Train, Test, P, lambda = 1e-05, C=NULL)
@@ -47,7 +51,10 @@ PEVMEAN(Train, Test, P, lambda = 1e-05, C=NULL)
 PEVMEAN0(Train, Test, P, lambda = 1e-05, C=NULL)
 PEVMEAN2(Train, Test, P, lambda = 1e-05, C=NULL)
 PEVMEANMM(Train, Test, Kinv,K, lambda = 1e-05, C=NULL, Vg=NULL, Ve=NULL)
-
+dist_to_test(Train, Test, Dst, lambda, C)
+dist_to_test2(Train, Test, Dst, lambda, C)
+neg_dist_in_train(Train, Test, Dst, lambda, C)
+neg_dist_in_train2(Train, Test, Dst, lambda, C)
 }
 \arguments{
     \item{Train}{
@@ -59,7 +66,9 @@ vector of identifiers for individuals in the test set
   \item{P}{ (Only for Type-X)
 \eqn{n \times k} matrix of the first PCs of the predictor variables. The matrix needs to have union of the identifiers of the candidate and test individuals as rownames.
 }
-
+ \item{Dst}{ (Only for Type-D)
+\eqn{n \times n} symmetric distance matrix with row and column names.
+}
  \item{Kinv}{ (Only for Type-K)
 \eqn{n \times n} symmetric matrix (inverse of the relationship matrix K  between n individuals) with row and column names.
 }
@@ -106,7 +115,7 @@ residual covariance matrix for the traits (multi-trait version).
    CDMEAN2 \tab  \eqn{mean[diag(CP_{Test}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Train}P_{Train}} \tab X \cr
    \tab  \eqn{(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}C')/diag(CP_{Test}P'_{Test}C')] } \tab  \cr
 
-  CDMEANMM \tab \eqn{-mean[diag(CZ_{Test}(K-lambda*(Z_{Train}'MZ_{Train})^{-1}+\lambda*Kinv)Z_{Test}'C')/}  \tab K \cr
+  CDMEANMM \tab \eqn{-mean[diag(CZ_{Test}(K-lambda*(Z_{Train}'MZ_{Train}+\lambda*Kinv)^{-1}Z_{Test}'C')/}  \tab K \cr
    \tab \eqn{(diag(CZ_{Test}KZ_{Test}'C'))]}   \tab  \cr
 
   DOPT \tab  \eqn{logdet(C(P'_{Train}P_{Train}+lambda*I))^{-1}C'} \tab X \cr
