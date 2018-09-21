@@ -1,4 +1,4 @@
-6df926533e84f1daea7e17597ba810ae *DESCRIPTION
+0bbb807388f122023d47e4df8adaaefb *DESCRIPTION
 dab016b7d4e51596053e583165cc1621 *NAMESPACE
 beeb4a415c6ee8983d198bb5dd5867ae *R/AOPT.R
 8e0e88e9debd458ff40fe881bc547314 *R/Amatinpieces.R
@@ -15,10 +15,10 @@ c17458908de402bc185f59df2ac0b058 *R/CDMEANMM.R
 1ccef1a3c781aa1f5f0ce83f4ccd2985 *R/GAUSSMEANMM.R
 09dfc184f0d96fcb6af8600dddce02dd *R/GOPTPEV.R
 34298c05a3abc02526a01fdd7345bcc6 *R/GOPTPEV2.R
-8fdf2871cee27eeab0e870df54126a33 *R/GenAlgForSubsetSelection.R
+11f403c417c01d192fc3ad33742d8159 *R/GenAlgForSubsetSelection.R
 bf97a10490a924f905abf345ab4ab32e *R/GenAlgForSubsetSelectionMO.R
 340e6a707cb41f8fb8db6fc08117872a *R/GenAlgForSubsetSelectionMONoTest.R
-79cf42420cd1cfdd09d7038bc3f84878 *R/GenAlgForSubsetSelectionNoTest.R
+fb54da4a4bd4bd0de4f5410738a964f4 *R/GenAlgForSubsetSelectionNoTest.R
 9dcf67f7641f9642e6510011d839579d *R/GenerateCrossesfromElites.R
 4c7934ff00a1ea140e5c7b98992dddaa *R/PEVMAX.R
 0bbf75ba711c7a40e627516948da03d2 *R/PEVMAX0.R
@@ -31,11 +31,11 @@ dce8543b03700c318a0b87e1611f393c *R/disttoideal.R
 6a06399f025c13083d77f9cf25cdddb5 *R/makeonecross.R
 d0162db69e3eaa4e3726120a8bda813c *data/WheatData.rda
 006a039c8b095cdcb18c3c92cdc09dde *man/Amat.pieces.Rd
-2e373fd989985fb06d08402d371ebc80 *man/CRITERIA.Rd
-f59d036e30c797f5038d7b666571a2cb *man/GenAlgForSubsetSelection.Rd
+2c6caff29a02994d102266584f261562 *man/CRITERIA.Rd
+f29f4bcaf357c9a82228533147739803 *man/GenAlgForSubsetSelection.Rd
 75db7b21f31e8b67afb11bddd392a7c9 *man/GenAlgForSubsetSelectionMO.Rd
 a13b623498eb0dcf1d732ccde939db22 *man/GenAlgForSubsetSelectionMONoTest.Rd
-8e2a91be0304e6d6a27586a95d537d36 *man/GenAlgForSubsetSelectionNoTest.Rd
+b843522ef4cdb302450cd5cb7d23f027 *man/GenAlgForSubsetSelectionNoTest.Rd
 5e4f2f3697fb599b775abc12406d130e *man/GenerateCrossesfromElites.Rd
 b8c088c4cd4d7d2dd1ea968f85fd782f *man/STPGA-package.Rd
 8382a389c5bf5825174a9eca629b6b50 *man/WheatData.Rd

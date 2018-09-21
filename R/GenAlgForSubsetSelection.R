@@ -1,6 +1,8 @@
 GenAlgForSubsetSelection <-
-  function(P,Candidates,Test,ntoselect, npop=100, nelite=5, keepbest=TRUE, tabu=TRUE,tabumemsize=1, mutprob=.8, mutintensity=1, niterations=500, minitbefstop=200,niterreg=5,lambda=1e-6, plotiters=FALSE,plottype=1, errorstat="PEVMEAN2",C=NULL, mc.cores=1, InitPop=NULL, tolconv=1e-7, Vg=NULL, Ve=NULL){
+  function(P,Candidates,Test,ntoselect, npop=100, nelite=5, keepbest=TRUE, tabu=TRUE,tabumemsize=1, mutprob=.8, mutintensity=1, niterations=500, minitbefstop=200,niterreg=5,lambda=1e-6, plotiters=FALSE,plottype=1, errorstat="PEVMEAN2",C=NULL, mc.cores=1, InitPop=NULL, tolconv=1e-7, Vg=NULL, Ve=NULL, Fedorov=FALSE){
 
+    
+    if ((ncol(P)+1)>ntoselect){warning("The algorithm does not work well with p>ntrain, perhaps use a unsupervised dimension reduction on P.")}
     ridgereg<-function(y=CurrentPopFuncValues ,x=designforCurrentPop,lambda=lambda){
 		n<-nrow(x)
 		p<-ncol(x)
@@ -41,9 +43,14 @@ GenAlgForSubsetSelection <-
     
     if (is.null(InitPop)){
       if (sum(errorstat %in%c("AOPT", "DOPT", "CDMEAN", "PEVMEAN", "PEVMEAN2"))>0){
-        InitPop<-lapply(1:npop, function(q){
+        if (Fedorov) {InitPop<-lapply(1:npop, function(q){
           return(getsetsfedorov(q))
         })
+        } else {
+          InitPop<-lapply(1:npop, function(q){
+            return(sample(Candidates,ntoselect))
+          })
+        }
       }
     }
     

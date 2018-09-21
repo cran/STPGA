@@ -153,6 +153,10 @@ residual covariance matrix for the traits (multi-trait version).
    \tab  \eqn{P'_{Train}P_{Train}(P'_{Train}P_{Train}+lambda*I)^{-1}P'_{Test}C']}  \tab  \cr
    
    PEVMEANMM \tab \eqn{mean(diag(CZ_{test}(Ztrain'MZtrain+lambda*Kinv)^{-1}Ztest'C')))} \tab K \cr
+   dist_to_test \tab maximum distance from training set to test set based on Dst  \tab D \cr
+    dist_to_test2 \tab mean distance from training set to test set based on Dst  \tab D \cr
+    neg_dist_in_train \tab negative of minimum distance between pairs in the training set based on Dst  \tab D \cr
+    neg_dist_in_train2 \tab negative of mean distance between distinct pairs in the training set based on Dst  \tab D \cr
    \tab   \tab  \cr
  }
 }
