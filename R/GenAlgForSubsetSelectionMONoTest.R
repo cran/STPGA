@@ -77,6 +77,8 @@ GenAlgForSubsetSelectionMONoTest<-function(Pcs=NULL,Dist=NULL, Kernel=NULL,Candi
     lengthfrontier<-length(frontier3)
     }
     xy.f <- matrix(InitPopFuncValues[frontier3, ],nrow=length(frontier3))
+    cdxy.f<-emoa::crowding_distance(xy.f)
+    
     colnames(xy.f)<-selectionstats
      if (plotiters){
        rbPal <- grDevices::colorRampPalette(c("light green", "yellow", "orange", "red")[4:1])
@@ -151,7 +153,9 @@ GenAlgForSubsetSelectionMONoTest<-function(Pcs=NULL,Dist=NULL, Kernel=NULL,Candi
       lengthfrontier<-length(frontier3)
       }
       xy.f <- matrix(CurrentPopFuncValues[frontier3, ], nrow=length(frontier3))
-      #
+      cdxy.f<-emoa::crowding_distance(xy.f)
+      browser()
+       #
       # Visualization.
       #
       colnames(xy.f)<-selectionstats

@@ -1,4 +1,4 @@
-0bbb807388f122023d47e4df8adaaefb *DESCRIPTION
+d5a1d500e7e70a527e2d996522400aac *DESCRIPTION
 dab016b7d4e51596053e583165cc1621 *NAMESPACE
 beeb4a415c6ee8983d198bb5dd5867ae *R/AOPT.R
 8e0e88e9debd458ff40fe881bc547314 *R/Amatinpieces.R
@@ -17,7 +17,7 @@ c17458908de402bc185f59df2ac0b058 *R/CDMEANMM.R
 34298c05a3abc02526a01fdd7345bcc6 *R/GOPTPEV2.R
 11f403c417c01d192fc3ad33742d8159 *R/GenAlgForSubsetSelection.R
 bf97a10490a924f905abf345ab4ab32e *R/GenAlgForSubsetSelectionMO.R
-340e6a707cb41f8fb8db6fc08117872a *R/GenAlgForSubsetSelectionMONoTest.R
+1b5c0efbd90071c24d4cab8e9727bb84 *R/GenAlgForSubsetSelectionMONoTest.R
 fb54da4a4bd4bd0de4f5410738a964f4 *R/GenAlgForSubsetSelectionNoTest.R
 9dcf67f7641f9642e6510011d839579d *R/GenerateCrossesfromElites.R
 4c7934ff00a1ea140e5c7b98992dddaa *R/PEVMAX.R
